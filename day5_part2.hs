@@ -1,19 +1,28 @@
 import Data.Char (isDigit)
 import Control.Applicative ( Alternative((<|>)) )
-import Data.List (nub)
+import System.IO.Memoize (eagerlyOnce)
+import Debug.Trace
+
 main :: IO ()
 main = do
-    content <- readFile "day5_input.txt"
-    let rows = lines content
-    let maps = map parseMap $ separatedMaps $ filter (not . null) $ tail rows
-    let seeds = seedsToRanges $ map (read :: String -> Int) $ words $ dropWhile (not . isDigit) $ head rows
-    let result = minimum $ map (`seedToLocation` maps) seeds
+    readOnce <- eagerlyOnce $ readFile "day5_input.txt"
+    content <- readOnce
+    let (seedRow : mapRows) = lines content
+    let maps = separatedMaps $ filter (not . null) mapRows
+    let minOutputs = parseMinimums $ last maps
+    let inverseMaps = reverse $ map parseInverseMap maps
+    let minInputs = minimumInputs inverseMaps minOutputs
+    let seeds = seedsToRanges $ map (read :: String -> Int) $ words $ dropWhile (not . isDigit) seedRow
+    let actualSeeds = 0 : filter (\n -> any (\(start, offset) -> n >= start && n < start + offset) seeds) minInputs
+
+    let seedToLocation = collapseMaps $ map parseMap maps
+    let result = minimum $ map seedToLocation actualSeeds
     print result
     return ()
 
-seedsToRanges :: [Int] -> [Int]
+seedsToRanges :: [Int] -> [(Int, Int)]
 seedsToRanges [] = []
-seedsToRanges (x1 : x2 : xs) = [x1 .. x1 + x2 - 1] ++ seedsToRanges xs
+seedsToRanges (x1 : x2 : xs) = (x1, x2) : seedsToRanges xs
 
 separatedMaps :: [String] -> [[String]]
 separatedMaps = filter (not . null) . foldr (\line list ->
@@ -22,8 +31,8 @@ separatedMaps = filter (not . null) . foldr (\line list ->
 type PartialMap = Int -> Maybe Int
 type Map = Int -> Int
 
-parseSingleLine :: String -> PartialMap
-parseSingleLine str = let
+mapFromString :: String -> PartialMap
+mapFromString str = let
     destinationRangeStart = (read :: String -> Int) . head . words $ str
     sourceRangeStart = (read :: String -> Int) . (!! 1) . words $ str
     rangeLength = (read :: String -> Int) . (!! 2) . words $ str
@@ -33,10 +42,32 @@ parseSingleLine str = let
         else Nothing
 
 parseMap :: [String] -> Map
-parseMap = turnTotal . foldr ((\partialMap map x -> partialMap x <|> map x) . parseSingleLine) Just
+parseMap = turnTotal . foldr ((\partial1 partial2 x -> partial1 x <|> partial2 x) . mapFromString) Just
 
 turnTotal :: PartialMap -> Map
 turnTotal f x = sum $ f x
 
-seedToLocation :: Int -> [Map] -> Int
-seedToLocation = foldl (\x f -> f x)
+collapseMaps :: [Map] -> Map
+collapseMaps = foldr (flip (.)) id
+
+type InverseMap = Int -> [Int]
+
+inverseMapFromString :: String -> InverseMap
+inverseMapFromString str = let
+    destinationRangeStart = (read :: String -> Int) . head . words $ str
+    sourceRangeStart = (read :: String -> Int) . (!! 1) . words $ str
+    rangeLength = (read :: String -> Int) . (!! 2) . words $ str
+    in
+    \y -> if y >= destinationRangeStart && y < destinationRangeStart + rangeLength
+        then [y - destinationRangeStart + sourceRangeStart]
+        else []
+
+parseInverseMap :: [String] -> InverseMap
+parseInverseMap = foldr ((\partialMap map x -> partialMap x ++ map x) . inverseMapFromString) (: [])
+
+parseMinimums :: [String] -> [Int]
+parseMinimums = map (read . head . words)
+
+minimumInputs :: [InverseMap] -> [Int] -> [Int]
+minimumInputs [] inputs = inputs
+minimumInputs (m : ms) outputs = minimumInputs ms (concatMap m outputs)
