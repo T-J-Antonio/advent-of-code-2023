@@ -1,12 +1,9 @@
 import Data.Char (isDigit)
 import Control.Applicative ( Alternative((<|>)) )
-import System.IO.Memoize (eagerlyOnce)
-import Debug.Trace
 
 main :: IO ()
 main = do
-    readOnce <- eagerlyOnce $ readFile "day5_input.txt"
-    content <- readOnce
+    content <- readFile "day5_input.txt"
     let (seedRow : mapRows) = lines content
     let maps = separatedMaps $ filter (not . null) mapRows
     let minOutputs = parseMinimums $ last maps
