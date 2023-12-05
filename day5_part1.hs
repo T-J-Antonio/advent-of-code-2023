@@ -29,7 +29,7 @@ parseSingleLine str = let
         else Nothing
 
 parseMap :: [String] -> Map
-parseMap = turnTotal . foldr ((\partialMap map x -> partialMap x <|> map x) . parseSingleLine) Just
+parseMap = turnTotal . foldr ((\partial1 partial2 x -> partial1 x <|> partial2 x) . parseSingleLine) Just
 
 turnTotal :: PartialMap -> Map
 turnTotal f x = sum $ f x
