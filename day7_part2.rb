@@ -72,7 +72,6 @@ lines = lines.sort do |line1, line2|
 end
 total = 0
 lines.each_with_index do |line, i|
-  hand = line.split(" ")[0]
   total = total + line.split(" ")[1].to_i * (i + 1)
 end
 puts total
