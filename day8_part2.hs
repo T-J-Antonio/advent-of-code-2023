@@ -7,18 +7,16 @@ main :: IO ()
 main = do
     content <- readFile "day8_input.txt"
     let rows = lines content
-    let directions = cycle $ head rows
-    let loopSize = length $ head rows
     let completeMap = Map.unions $ map readNode (drop 2 rows)
     let start = map (take 3) $ filter ((== 'A') . (!! 2)) (drop 2 rows)
+    let directions = cycle $ head rows
     let loop = map (steps directions completeMap) start
+    let loopSize = length $ head rows
     let pointsOfStartAndEnd = map (findLoop loopSize) loop
     let zsBeforeStarting = findZs . map (\(n, steps) -> take n steps) $ zip (map fst pointsOfStartAndEnd) loop
     let zsInLoop = findZs . map (\((i, j), steps) -> drop i . take j $ steps) $ zip pointsOfStartAndEnd loop
-    let firstZsList = map (take (maximum (map fst pointsOfStartAndEnd))) $ zipWith3 totalZs zsBeforeStarting zsInLoop pointsOfStartAndEnd
-    let prematureMatch = firstMatch firstZsList
-    if prematureMatch /= Nothing then print (fromJust $ prematureMatch) else pure ()
-    let actualZsInLoop = zipWith (\(i, _) zs -> map (+(i+1)) zs) pointsOfStartAndEnd $ findZs . map (\((i, j), steps) -> drop i . take j $ steps) $ zip pointsOfStartAndEnd loop
+    checkPrematureMatch pointsOfStartAndEnd zsBeforeStarting zsInLoop
+    let actualZsInLoop = zipWith (\(i, _) zs -> map (+(i+1)) zs) pointsOfStartAndEnd zsInLoop
     let result = minimum $ map (foldr1 lcm) $ sequence actualZsInLoop
     print result
     return ()
@@ -49,6 +47,15 @@ findLoopWithMap loopSize (step : steps) currentMap currentIter = let
 
 findZs :: [[String]] -> [[Int]]
 findZs = map (findIndices ((== 'Z') . last))
+
+-- This last part checks whether a match is produced before all ghosts enter the loop.
+-- Of course, this doesn't happen, but I wanted every case to be covered.
+
+checkPrematureMatch :: [(Int, Int)] -> [[Int]] -> [[Int]] -> IO ()
+checkPrematureMatch pointsOfStartAndEnd zsBeforeStarting zsInLoop = do
+    let firstZsList = map (take (maximum (map fst pointsOfStartAndEnd))) $ zipWith3 totalZs zsBeforeStarting zsInLoop pointsOfStartAndEnd
+    let prematureMatch = firstMatch firstZsList
+    if prematureMatch /= Nothing then print (fromJust $ prematureMatch) else pure ()
 
 loopingZs :: Int -> [Int] -> [Int]
 loopingZs loopSize zs = concatMap (\m -> map (\n -> n + m * loopSize) zs) [0..]
