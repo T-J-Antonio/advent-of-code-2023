@@ -1,4 +1,6 @@
-*.txt
-*.hi
-*.o
-.idea/
+**/*.txt
+**/*.hi
+**/*.o
+**/.idea/
+**/*.iml
+**/out/
