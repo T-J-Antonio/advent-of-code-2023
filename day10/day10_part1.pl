@@ -8,7 +8,8 @@ main :-
     points_at(SecondPos, StartPos),
     loop(StartPos, SecondPos, N),
     FarthestStep is N / 2,
-    write(FarthestStep).
+    write(FarthestStep),
+    !.
 
 :- dynamic(tile/2).
 :- dynamic(max_x/1).
@@ -42,8 +43,7 @@ loop(PrevPos, CurrPos, 2) :-
     points_at(CurrPos, NextPos),
     points_at(NextPos, CurrPos),
     NextPos \= PrevPos,
-    tile('S', NextPos),
-    !.
+    tile('S', NextPos).
 
 loop(PrevPos, CurrPos, N) :-
     points_at(CurrPos, NextPos),
