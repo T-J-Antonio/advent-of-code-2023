@@ -1,4 +1,3 @@
-require 'benchmark'
 require 'set'
 
 def consumed_condition_numbers(prev, conditions, condition_numbers, consumed)
@@ -53,7 +52,7 @@ end
 def make_map(conditions, condition_numbers, prev, last)
   map = {}
   map.default = 0
-  (condition_numbers.sum * 5).times do |m|
+  (condition_numbers.sum * 5 + 1).times do |m|
     array = consumed_condition_numbers(prev, conditions + last, subtract_consumptions(Array.new(5).fill(condition_numbers).flatten, m, prev), 0)
     array.to_set.each do |n|
       map[[m, n]] = array.count(n)
@@ -74,27 +73,23 @@ def calculate_arrangements(condition_numbers, iteration_number, prev, consumed)
   if prev == '.'
     $dot_dot.each do |consumptions, occurrences|
       if consumptions[0] == consumed
-        new_conditions = condition_numbers - consumptions[1]#subtract_consumptions(condition_numbers, consumptions[1], '.')
-        sum = sum + occurrences * calculate_arrangements(new_conditions, iteration_number + 1, '.', consumed + consumptions[1])
+        sum = sum + occurrences * calculate_arrangements(condition_numbers - consumptions[1], iteration_number + 1, '.', consumed + consumptions[1])
       end
     end
     $dot_hash.each do |consumptions, occurrences|
       if consumptions[0] == consumed
-        new_conditions = condition_numbers - consumptions[1]#subtract_consumptions(condition_numbers, consumptions[1], '#')
-        sum = sum + occurrences * calculate_arrangements(new_conditions, iteration_number + 1, '#', consumed + consumptions[1])
+        sum = sum + occurrences * calculate_arrangements(condition_numbers - consumptions[1], iteration_number + 1, '#', consumed + consumptions[1])
       end
     end
   else
     $hash_dot.each do |consumptions, occurrences|
       if consumptions[0] == consumed
-        new_conditions = condition_numbers - consumptions[1]#subtract_consumptions(condition_numbers, consumptions[1], '.')
-        sum = sum + occurrences * calculate_arrangements(new_conditions, iteration_number + 1, '.', consumed + consumptions[1])
+        sum = sum + occurrences * calculate_arrangements(condition_numbers - consumptions[1], iteration_number + 1, '.', consumed + consumptions[1])
       end
     end
     $hash_hash.each do |consumptions, occurrences|
       if consumptions[0] == consumed
-        new_conditions = condition_numbers - consumptions[1]#subtract_consumptions(condition_numbers, consumptions[1], '#')
-        sum = sum + occurrences * calculate_arrangements(new_conditions, iteration_number + 1, '#', consumed + consumptions[1])
+        sum = sum + occurrences * calculate_arrangements(condition_numbers - consumptions[1], iteration_number + 1, '#', consumed + consumptions[1])
       end
     end
   end
@@ -111,14 +106,11 @@ def arrangements_splitting(conditions, condition_numbers)
   calculate_arrangements(condition_numbers.sum * 5, 0, '.', 0)
 end
 
-t = Benchmark.realtime do
-  lines = File.read("day12_input.txt").split("\n")
-  total = lines.reduce 0 do |prev, line|
-    conditions = line.split(" ")[0]
-    condition_numbers = line.split(" ")[1].split(",").map &:to_i
-    arr = arrangements_splitting(conditions, condition_numbers)
-    prev + arr
-  end
-  puts total
+lines = File.read("day12_input.txt").split"\n"
+total = lines.reduce 0 do |prev, line|
+  conditions = line.split(" ")[0]
+  condition_numbers = line.split(" ")[1].split(",").map &:to_i
+  arr = arrangements_splitting(conditions, condition_numbers)
+  prev + arr
 end
-puts t
+puts total
