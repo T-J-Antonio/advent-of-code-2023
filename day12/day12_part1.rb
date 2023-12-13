@@ -23,7 +23,7 @@ def arrangements(prev, conditions, condition_numbers)
     conditions2[0] = '#'
     return arrangements(prev, conditions1, condition_numbers.clone) + arrangements(prev, conditions2, condition_numbers.clone)
   end
-  arrangements(conditions[0], conditions[1..], condition_numbers.clone)
+  arrangements(conditions[0], conditions[1..], condition_numbers)
 end
 
 lines = File.read("day12_input.txt").split "\n"
