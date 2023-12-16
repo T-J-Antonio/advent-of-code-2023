@@ -4,12 +4,12 @@ main :-
     findall(CharList, (member(Line, Lines), string_chars(Line, CharList)), Matrix),
     assert_info(Matrix),
     assert(tile('.', (-1, 0))),
-    propagate((-1, 0), right),
+    forall(propagate((-1, 0), right), true),
     findall(P, passed(P, _, _), PList),
     list_to_set(PList, PSet),
     length(PSet, Length),
     Result is Length - 1,
-    write(Result). % The correct result is the last one given (you must spam Tab in order to generate all paths)
+    write(Result).
 
 :- dynamic(tile/2).
 
