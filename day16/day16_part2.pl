@@ -37,9 +37,6 @@ max_tiles_energized(Tiles) :-
 :- dynamic passed/3.
 
 tiles_energized(P, Direction, Tiles) :-
-    write(P),
-    write(Direction),
-    write("\n"),
     assert(tile('.', P)),
     propagate(P, Direction, TilesList),
     length(TilesList, Length),
