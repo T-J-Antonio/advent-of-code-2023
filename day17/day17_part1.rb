@@ -1,5 +1,3 @@
-require 'set'
-
 $city_map = []
 lines = File.read("day17_input.txt").split "\n"
 $max_x = lines[0].length
