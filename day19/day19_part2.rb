@@ -1,4 +1,4 @@
-content = File.read "day19_input.txt"
+content = File.read "sarasa.txt"
 content = content.split "\n\n"
 workflows_str = content[0].split "\n"
 
@@ -23,7 +23,7 @@ def new_b_c
   $base_conditions.clone
 end
 
-$acceptable_conditions = []
+$conditions = []
 
 def invert(category_and_operation, number)
   category = category_and_operation[0]
@@ -68,13 +68,15 @@ class Workflow
     new_conditions[category_and_operation] = number
     self.c_o_and_ns.push [category_and_operation, number]
     final_new = combine_conditions(all_the_previous_ones_negated, new_conditions)
-    self.transitions.push [final_new, action] unless action == "R"
+    self.transitions.push [final_new, action]
   end
   def apply(previous_conditions)
     self.transitions.each do |t|
       new_conditions = combine_conditions t[0], previous_conditions
       if t[1] == "A"
-        $acceptable_conditions.push new_conditions
+        $conditions.push [:a, new_conditions]
+      elsif t[1] == "R"
+        $conditions.push [:r, new_conditions]
       else
         $workflows_map[t[1]].apply new_conditions
       end
@@ -104,14 +106,14 @@ end
 $workflows_map["in"].apply new_b_c
 
 def process_conditions(index, parts)
-  return 0 if index >= $acceptable_conditions.size or parts.any? do |a| a.empty? end
-  conditions = $acceptable_conditions[index]
+  return 0 if index >= $conditions.size or parts.any? do |a| a.empty? end
+  conditions = $conditions[index][1]
+  accept = $conditions[index][0] == :a
   acceptable_xs = parts[0].filter do |n| n > conditions["x>"] and n < conditions["x<"] end
   acceptable_ms = parts[1].filter do |n| n > conditions["m>"] and n < conditions["m<"] end
   acceptable_as = parts[2].filter do |n| n > conditions["a>"] and n < conditions["a<"] end
   acceptable_ss = parts[3].filter do |n| n > conditions["s>"] and n < conditions["s<"] end
-  these_acceptables = acceptable_xs.size * acceptable_ms.size * acceptable_as.size * acceptable_ss.size
-  acceptables_branch1 = process_conditions(
+  branch1 = process_conditions(
     index + 1,
     [
       parts[0].filter do |n| n <= conditions["x>"] or n >= conditions["x<"] end,
@@ -120,7 +122,7 @@ def process_conditions(index, parts)
       parts[3]
     ]
   )
-  acceptables_branch2 = process_conditions(
+  branch2 = process_conditions(
     index + 1,
     [
       acceptable_xs,
@@ -129,7 +131,7 @@ def process_conditions(index, parts)
       parts[3]
     ]
   )
-  acceptables_branch3 = process_conditions(
+  branch3 = process_conditions(
     index + 1,
     [
       acceptable_xs,
@@ -138,7 +140,7 @@ def process_conditions(index, parts)
       parts[3]
     ]
   )
-  acceptables_branch4 = process_conditions(
+  branch4 = process_conditions(
     index + 1,
     [
       acceptable_xs,
@@ -147,7 +149,12 @@ def process_conditions(index, parts)
       parts[3].filter do |n| n <= conditions["s>"] or n >= conditions["s<"] end
     ]
   )
-  these_acceptables + acceptables_branch1 + acceptables_branch2 + acceptables_branch3 + acceptables_branch4
+  if accept
+    these_acceptables = acceptable_xs.size * acceptable_ms.size * acceptable_as.size * acceptable_ss.size
+  else
+    these_acceptables = 0
+  end
+  these_acceptables + branch1 + branch2 + branch3 + branch4
 end
 
 result = process_conditions(0, [(1..4000).to_a, (1..4000).to_a, (1..4000).to_a, (1..4000).to_a])
