@@ -1,4 +1,4 @@
-content = File.read "sarasa.txt"
+content = File.read "day19_input.txt"
 content = content.split "\n\n"
 workflows_str = content[0].split "\n"
 
@@ -103,4 +103,52 @@ end
 
 $workflows_map["in"].apply new_b_c
 
-puts $acceptable_conditions
+def process_conditions(index, parts)
+  return 0 if index >= $acceptable_conditions.size or parts.any? do |a| a.empty? end
+  conditions = $acceptable_conditions[index]
+  acceptable_xs = parts[0].filter do |n| n > conditions["x>"] and n < conditions["x<"] end
+  acceptable_ms = parts[1].filter do |n| n > conditions["m>"] and n < conditions["m<"] end
+  acceptable_as = parts[2].filter do |n| n > conditions["a>"] and n < conditions["a<"] end
+  acceptable_ss = parts[3].filter do |n| n > conditions["s>"] and n < conditions["s<"] end
+  these_acceptables = acceptable_xs.size * acceptable_ms.size * acceptable_as.size * acceptable_ss.size
+  acceptables_branch1 = process_conditions(
+    index + 1,
+    [
+      parts[0].filter do |n| n <= conditions["x>"] or n >= conditions["x<"] end,
+      parts[1],
+      parts[2],
+      parts[3]
+    ]
+  )
+  acceptables_branch2 = process_conditions(
+    index + 1,
+    [
+      acceptable_xs,
+      parts[1].filter do |n| n <= conditions["m>"] or n >= conditions["m<"] end,
+      parts[2],
+      parts[3]
+    ]
+  )
+  acceptables_branch3 = process_conditions(
+    index + 1,
+    [
+      acceptable_xs,
+      acceptable_ms,
+      parts[2].filter do |n| n <= conditions["a>"] or n >= conditions["a<"] end,
+      parts[3]
+    ]
+  )
+  acceptables_branch4 = process_conditions(
+    index + 1,
+    [
+      acceptable_xs,
+      acceptable_ms,
+      acceptable_as,
+      parts[3].filter do |n| n <= conditions["s>"] or n >= conditions["s<"] end
+    ]
+  )
+  these_acceptables + acceptables_branch1 + acceptables_branch2 + acceptables_branch3 + acceptables_branch4
+end
+
+result = process_conditions(0, [(1..4000).to_a, (1..4000).to_a, (1..4000).to_a, (1..4000).to_a])
+puts result
