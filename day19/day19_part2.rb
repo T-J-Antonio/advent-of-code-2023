@@ -105,57 +105,124 @@ end
 
 $workflows_map["in"].apply new_b_c
 
-def process_conditions(index, parts)
-  return 0 if index >= $conditions.size or parts.any? do |a| a.empty? end
+class ValueRange
+  attr_accessor :borders
+  def initialize(borders)
+    actual_borders = []
+    prev = nil
+    borders.each do |b|
+      if b - 1 == prev
+        actual_borders.pop
+      else
+        actual_borders.push b
+      end
+      prev = b
+    end
+    self.borders = actual_borders
+  end
+  def intersect(other)
+    these_borders = self.borders
+    other_borders = other.borders
+    these_are_open = false
+    other_are_open = false
+    i = 0
+    j = 0
+    result = []
+    until these_borders.size == i or other_borders.size == j
+      v1 = these_borders[i]
+      v2 = other_borders[j]
+      if v1 <= v2
+        these_are_open = true if i.even?
+        unless these_are_open ^ other_are_open
+          result.push v1
+        end
+        these_are_open = false unless i.even?
+        i = i + 1
+      else
+        other_are_open = true if j.even?
+        unless these_are_open ^ other_are_open
+          result.push v2
+        end
+        other_are_open = false unless j.even?
+        j = j + 1
+      end
+    end
+    ValueRange.new result
+  end
+  def empty?
+    self.borders.empty?
+  end
+  def size
+    res = 0
+    self.borders.each_with_index do |value, i|
+      res = res + (i.even? ? - value : value - 1)
+    end
+    res
+  end
+end
+
+def process_conditions(index, xs, ms, as, ss)
+  return 0 if index >= $conditions.size or xs.empty? or ms.empty? or as.empty? or ss.empty?
   conditions = $conditions[index][1]
   accept = $conditions[index][0] == :a
-  acceptable_xs = parts[0].filter do |n| n > conditions["x>"] and n < conditions["x<"] end
-  acceptable_ms = parts[1].filter do |n| n > conditions["m>"] and n < conditions["m<"] end
-  acceptable_as = parts[2].filter do |n| n > conditions["a>"] and n < conditions["a<"] end
-  acceptable_ss = parts[3].filter do |n| n > conditions["s>"] and n < conditions["s<"] end
-  branch1 = process_conditions(
-    index + 1,
-    [
-      parts[0].filter do |n| n <= conditions["x>"] or n >= conditions["x<"] end,
-      parts[1],
-      parts[2],
-      parts[3]
-    ]
-  )
-  branch2 = process_conditions(
-    index + 1,
-    [
-      acceptable_xs,
-      parts[1].filter do |n| n <= conditions["m>"] or n >= conditions["m<"] end,
-      parts[2],
-      parts[3]
-    ]
-  )
-  branch3 = process_conditions(
-    index + 1,
-    [
-      acceptable_xs,
-      acceptable_ms,
-      parts[2].filter do |n| n <= conditions["a>"] or n >= conditions["a<"] end,
-      parts[3]
-    ]
-  )
-  branch4 = process_conditions(
-    index + 1,
-    [
-      acceptable_xs,
-      acceptable_ms,
-      acceptable_as,
-      parts[3].filter do |n| n <= conditions["s>"] or n >= conditions["s<"] end
-    ]
-  )
+  complying_xs = xs.intersect(ValueRange.new [conditions["x>"], conditions["x<"]])
+  complying_ms = ms.intersect(ValueRange.new [conditions["m>"] ,conditions["m<"]])
+  complying_as = as.intersect(ValueRange.new [conditions["a>"], conditions["a<"]])
+  complying_ss = ss.intersect(ValueRange.new [conditions["s>"] ,conditions["s<"]])
+  borders = []
+  if conditions["x>"] > 1
+    borders.push 0, conditions["x>"] + 1
+  end
+  if conditions["x<"] < 4000
+    borders.push conditions["x<"] - 1, 4001
+  end
+  noncomplying_xs = xs.intersect(ValueRange.new borders)
+  borders = []
+  if conditions["m>"] > 1
+    borders.push 0, conditions["m>"] + 1
+  end
+  if conditions["m<"] < 4000
+    borders.push conditions["m<"] - 1, 4001
+  end
+  noncomplying_ms = ms.intersect(ValueRange.new borders)
+  borders = []
+  if conditions["a>"] > 1
+    borders.push 0, conditions["a>"] + 1
+  end
+  if conditions["a<"] < 4000
+    borders.push conditions["a<"] - 1, 4001
+  end
+  noncomplying_as = as.intersect(ValueRange.new borders)
+  borders = []
+  if conditions["s>"] > 1
+    borders.push 0, conditions["s>"] + 1
+  end
+  if conditions["s<"] < 4000
+    borders.push conditions["s<"] - 1, 4001
+  end
+  noncomplying_ss = ss.intersect(ValueRange.new borders)
+  branch1 = process_conditions(index + 1, complying_xs, complying_ms, complying_as, noncomplying_ss)
+  branch2 = process_conditions(index + 1, complying_xs, complying_ms, noncomplying_as, complying_ss)
+  branch3 = process_conditions(index + 1, complying_xs, complying_ms, noncomplying_as, noncomplying_ss)
+  branch4 = process_conditions(index + 1, complying_xs, noncomplying_ms, complying_as, complying_ss)
+  branch5 = process_conditions(index + 1, complying_xs, noncomplying_ms, complying_as, noncomplying_ss)
+  branch6 = process_conditions(index + 1, complying_xs, noncomplying_ms, noncomplying_as, complying_ss)
+  branch7 = process_conditions(index + 1, complying_xs, noncomplying_ms, noncomplying_as, noncomplying_ss)
+  branch8 = process_conditions(index + 1, noncomplying_xs, complying_ms, complying_as, complying_ss)
+  branch9 = process_conditions(index + 1, noncomplying_xs, complying_ms, complying_as, noncomplying_ss)
+  branch10 = process_conditions(index + 1, noncomplying_xs, complying_ms, noncomplying_as, complying_ss)
+  branch11 = process_conditions(index + 1, noncomplying_xs, complying_ms, noncomplying_as, noncomplying_ss)
+  branch12 = process_conditions(index + 1, noncomplying_xs, noncomplying_ms, complying_as, complying_ss)
+  branch13 = process_conditions(index + 1, noncomplying_xs, noncomplying_ms, complying_as, noncomplying_ss)
+  branch14 = process_conditions(index + 1, noncomplying_xs, noncomplying_ms, noncomplying_as, complying_ss)
+  branch15 = process_conditions(index + 1, noncomplying_xs, noncomplying_ms, noncomplying_as, noncomplying_ss)
   if accept
-    these_acceptables = acceptable_xs.size * acceptable_ms.size * acceptable_as.size * acceptable_ss.size
+    these_acceptables = complying_xs.size * complying_ms.size * complying_as.size * complying_ss.size
   else
     these_acceptables = 0
   end
-  these_acceptables + branch1 + branch2 + branch3 + branch4
+  these_acceptables + branch1 + branch2 + branch3 + branch4 + branch5 + branch6 + branch7 + branch8 + branch9 + branch10 + branch11 + branch12 + branch13 + branch14 + branch15
 end
 
-result = process_conditions(0, [(1..4000).to_a, (1..4000).to_a, (1..4000).to_a, (1..4000).to_a])
+result = process_conditions(0, ValueRange.new([0, 4001]), ValueRange.new([0, 4001]), ValueRange.new([0, 4001]), ValueRange.new([0, 4001]))
 puts result
