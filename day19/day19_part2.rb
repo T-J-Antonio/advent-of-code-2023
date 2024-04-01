@@ -2,39 +2,6 @@ content = File.read "day19_input.txt"
 content = content.split "\n\n"
 workflows_str = content[0].split "\n"
 
-def max(n1, n2)
-  n1 > n2 ? n1 : n2
-end
-def min(n1, n2)
-  n1 < n2 ? n1 : n2
-end
-
-$base_conditions = {
-  "x<" => 4001,
-  "x>" => 0,
-  "m<" => 4001,
-  "m>" => 0,
-  "a<" => 4001,
-  "a>" => 0,
-  "s<" => 4001,
-  "s>" => 0
-}
-def new_b_c
-  $base_conditions.clone
-end
-
-$conditions = []
-
-def invert(category_and_operation, number)
-  category = category_and_operation[0]
-  operation = category_and_operation[1]
-  if operation == "<"
-    [category + ">", number - 1]
-  else
-    [category + "<", number + 1]
-  end
-end
-
 class ValueRange
   attr_accessor :borders
   def initialize(borders)
