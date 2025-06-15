@@ -52,7 +52,7 @@ path_aux(Component1, Component2, WiresPassed, ComponentsPassed, [(Component1, In
     \+ member((Component1, Intermediate), WiresPassed),
     \+ member((Intermediate, Component1), WiresPassed),
     length(ComponentsPassed, L),
-    L < 8, % path_aux/5 uses DFS capped at 7 steps
+    L < 8, % path_aux/5 uses DFS capped at 8 steps
     path_aux(
         Intermediate,
         Component2,
@@ -78,12 +78,7 @@ process_groups :-
 
 :- dynamic together/2.
 
-% end early if all components are together with some other one
-process(_) :-
-    forall(component(Component), (together(Component, _); together(_, Component))).
-
 process([]).
-
 process([Component | Components]) :-
     forall(directly_connected(Component, C),
     (writeln((Component, C)), process_groups_aux(Component, C))),
